@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<!--
+  Ghi Chú VinVin
+  Tác giả / Author: VinVin
+  Copyright © 2026 VinVin. Bảo lưu mọi quyền / All rights reserved.
+  Nghiêm cấm sao chép, phân phối lại hoặc sử dụng cho mục đích thương mại
+  khi chưa có sự đồng ý bằng văn bản của tác giả.
+  Phần mềm tuyệt đối không lấy dữ liệu hay truy cập trái phép thông tin cá nhân người dùng. 
+-->
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Ghi chú</title>
+<meta name="author" content="VinVin" />
+<meta name="copyright" content="Copyright © 2026 VinVin. All rights reserved." />
+<meta name="theme-color" content="#1C1B1A" />
+<style>
+  .app-footer { text-align: center; font-size: 11.5px; color: #6B6963; padding: 8px 16px 28px; line-height: 1.6; }
+  .app-footer a { color: #8A8780; text-decoration: underline; cursor: pointer; }
+  .about-row { font-size: 13.5px; color: #D8D5CC; line-height: 1.7; margin: 0; }
+  .about-row b { color: #F4F1EA; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    background: #1C1B1A;
+    color: #F4F1EA;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+  .header {
+    position: sticky; top: 0; z-index: 10; background: #1C1B1A;
+    border-bottom: 1px solid #33312E; padding: 14px 16px 10px;
+  }
+  .header-top { display: flex; align-items: center; gap: 10px; }
+  h1 { font-size: 19px; font-weight: 600; margin: 0; flex: 1; font-family: Georgia, 'Times New Roman', serif; }
+  .icon-btn { background: transparent; border: none; color: #C9C6BC; cursor: pointer; padding: 6px; display: flex; }
+  .icon-btn:hover { color: #F4F1EA; }
+  .search-row { display: none; align-items: center; gap: 8px; margin-top: 10px; }
+  .search-row.open { display: flex; }
+  .search-box { position: relative; flex: 1; }
+  .search-box input {
+    width: 100%; background: #2A2926; border: 1px solid #3D3B37; border-radius: 8px;
+    color: #F4F1EA; font-size: 14px; padding: 9px 10px 9px 32px; outline: none;
+  }
+  .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); }
+  .status-row { display: flex; gap: 14px; margin-top: 10px; font-size: 12.5px; }
+  .status-row span { display: flex; align-items: center; gap: 4px; }
+  .compose { padding: 12px 16px; border-bottom: 1px solid #262523; }
+  textarea {
+    width: 100%; resize: none; background: #2A2926; border: 1px solid #3D3B37; border-radius: 10px;
+    color: #F4F1EA; font-size: 14.5px; padding: 10px 12px; outline: none; font-family: inherit; line-height: 1.5;
+  }
+  .compose-controls { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .toggle-btn {
+    display: flex; align-items: center; gap: 6px; background: #2A2926; border: 1px solid #3D3B37;
+    border-radius: 8px; color: #B4B2A9; font-size: 13px; padding: 6px 10px; cursor: pointer;
+  }
+  .toggle-btn.on { background: #3A4A3F; border-color: #5B8A72; color: #B7DCC5; }
+  input[type="date"], input[type="time"] {
+    background: #2A2926; border: 1px solid #3D3B37; border-radius: 8px; color: #F4F1EA;
+    font-size: 13px; padding: 6px 8px; color-scheme: dark; display: none;
+  }
+  input[type="date"].show, input[type="time"].show { display: inline-block; }
+  .spacer { flex: 1; }
+  .add-btn {
+    display: flex; align-items: center; gap: 6px; background: #3D3B37; border: none; border-radius: 8px;
+    color: #7A7871; font-size: 13.5px; font-weight: 600; padding: 7px 14px; cursor: default;
+  }
+  .add-btn.active { background: #C4622D; color: #FFF3EC; cursor: pointer; }
+  .feed { flex: 1; padding: 10px 16px 40px; }
+  .empty { text-align: center; color: #7A7871; font-size: 14px; margin-top: 40px; }
+  .note {
+    background: #F4F1EA; color: #2C2C2A; border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 10px; border: 1px solid transparent; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .note.overdue { border-color: #C4622D; }
+  .note.done { opacity: 0.65; }
+  .note-check { background: transparent; border: none; cursor: pointer; padding: 0; margin-top: 1px; color: #A8A69D; display: flex; }
+  .note-check.done { color: #5B8A72; }
+  .note-body { flex: 1; min-width: 0; }
+  .note-text { font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .note-text.done { text-decoration: line-through; }
+  .note-text mark { background: #F6D9A9; color: #4A2F0F; border-radius: 2px; padding: 0 1px; }
+  .note-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .note-time { font-size: 11.5px; color: #8A8780; }
+  .badge {
+    display: flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600;
+    padding: 2px 7px; border-radius: 6px;
+  }
+  .badge.pending { background: #DCEBE2; color: #2F5A42; }
+  .badge.overdue { background: #F5DED0; color: #8A3B14; }
+  .badge.done { background: #E4E2D9; color: #8A8780; }
+  .del-btn { background: transparent; border: none; cursor: pointer; color: #B4B2A9; padding: 4px; }
+  .edit-btn { background: transparent; border: none; cursor: pointer; color: #B4B2A9; padding: 4px; }
+  .note-actions { display: flex; flex-direction: column; gap: 2px; }
+  .progress-note {
+    margin-top: 6px; padding: 6px 9px; background: #EFE9DC; border-radius: 7px;
+    font-size: 12.5px; color: #6B5A3F; border-left: 3px solid #C4622D;
+  }
+  .edit-modal { background: #1C1B1A; border: 1px solid #3D3B37; border-radius: 12px; padding: 14px;
+    width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 10px; }
+  .edit-modal h2 { margin: 0; font-size: 16px; font-weight: 600; font-family: Georgia, serif; }
+  .edit-modal textarea {
+    width: 100%; resize: vertical; min-height: 70px; background: #2A2926; border: 1px solid #3D3B37;
+    border-radius: 8px; color: #F4F1EA; font-size: 14.5px; padding: 10px 12px; outline: none; font-family: inherit;
+  }
+  .edit-field-label { font-size: 12px; color: #B4B2A9; margin-bottom: 4px; display: block; }
+  .edit-due-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .mic-btn {
+    display: flex; align-items: center; justify-content: center; background: #2A2926; border: 1px solid #3D3B37;
+    border-radius: 8px; color: #B4B2A9; padding: 6px 8px; cursor: pointer; width: 34px; height: 34px;
+  }
+  .mic-btn.listening { background: #4A2A26; border-color: #C4622D; color: #E4A483; }
+  .mic-btn.listening svg { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .draw-note-img { display: block; max-width: 100%; border-radius: 8px; background: #fff; margin-top: 4px; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .draw-modal {
+    background: #1C1B1A; border: 1px solid #3D3B37; border-radius: 12px; padding: 14px;
+    width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .draw-modal h2 { margin: 0; font-size: 16px; font-weight: 600; font-family: Georgia, serif; }
+  #drawCanvas { background: #fff; border-radius: 8px; touch-action: none; width: 100%; height: 320px; display: block; }
+  .draw-controls { display: flex; align-items: center; gap: 8px; }
+  .draw-btn {
+    background: #2A2926; border: 1px solid #3D3B37; border-radius: 8px; color: #F4F1EA;
+    font-size: 13px; padding: 7px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .draw-btn.primary { background: #C4622D; border-color: #C4622D; color: #FFF3EC; font-weight: 600; }
+  .draw-spacer { flex: 1; }
+  .draw-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .color-swatches { display: flex; align-items: center; gap: 6px; }
+  .color-swatch {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0;
+  }
+  .color-swatch.active { border-color: #F4F1EA; }
+  .eraser-btn {
+    display: flex; align-items: center; gap: 6px; background: #2A2926; border: 1px solid #3D3B37;
+    border-radius: 8px; color: #F4F1EA; font-size: 13px; padding: 6px 10px; cursor: pointer;
+  }
+  .eraser-btn.active { background: #4A2A26; border-color: #C4622D; color: #E4A483; }
+  .draw-desc-row { display: flex; flex-direction: column; gap: 4px; }
+  .draw-desc-row label { font-size: 12px; color: #B4B2A9; }
+  .draw-desc-row input {
+    background: #2A2926; border: 1px solid #3D3B37; border-radius: 8px; color: #F4F1EA;
+    font-size: 14px; padding: 8px 10px; outline: none;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="header-top">
+      <h1>Ghi chú</h1>
+      <button class="icon-btn" id="searchToggle" aria-label="Tìm kiếm">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <div style="position:relative;">
+        <button class="icon-btn" id="menuToggle" aria-label="Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+        <div id="menuDropdown" style="display:none; position:absolute; right:0; top:36px; background:#2A2926; border:1px solid #3D3B37; border-radius:8px; min-width:170px; z-index:20; overflow:hidden;">
+          <button id="backupBtn" style="width:100%; text-align:left; background:transparent; border:none; color:#F4F1EA; font-size:13.5px; padding:10px 14px; cursor:pointer;">Sao lưu ghi chú</button>
+          <button id="restoreBtn" style="width:100%; text-align:left; background:transparent; border:none; color:#F4F1EA; font-size:13.5px; padding:10px 14px; cursor:pointer; border-top:1px solid #3D3B37;">Khôi phục ghi chú</button>
+          <button id="aboutBtn" style="width:100%; text-align:left; background:transparent; border:none; color:#F4F1EA; font-size:13.5px; padding:10px 14px; cursor:pointer; border-top:1px solid #3D3B37;">Giới thiệu &amp; Bản quyền</button>
+        </div>
+      </div>
+    </div>
+    <div class="search-row" id="searchRow">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A8780" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" placeholder="Tìm trong ghi chú..." />
+      </div>
+      <button class="icon-btn" id="searchClose" aria-label="Đóng tìm kiếm">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="status-row" id="statusRow"></div>
+  </div>
+
+  <div class="compose">
+    <textarea id="draft" rows="2" placeholder="Nhập ghi chú..."></textarea>
+    <div class="compose-controls">
+      <button class="toggle-btn" id="dueToggle">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span id="dueToggleLabel">Không báo giờ</span>
+      </button>
+      <input type="date" id="dueDate" />
+      <input type="time" id="dueTime" />
+      <div class="spacer"></div>
+      <button class="mic-btn" id="micBtn" aria-label="Nhập bằng giọng nói" title="Nhập bằng giọng nói">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
+      <button class="mic-btn" id="drawBtn" aria-label="Viết tay bằng bút" title="Viết tay bằng bút">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+      </button>
+      <button class="add-btn" id="addBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm
+      </button>
+    </div>
+    <div id="voiceStatus" style="display:none; align-items:center; gap:8px; margin-top:6px;">
+      <span style="font-size:12px; color:#E4A483;">Đang nghe... nói vào micro</span>
+      <button id="voiceDoneBtn" style="background:#3A4A3F; border:1px solid #5B8A72; color:#B7DCC5; border-radius:6px; font-size:12px; padding:3px 10px; cursor:pointer;">Xong</button>
+    </div>
+  </div>
+
+  <div class="feed" id="feed"></div>
+  <div class="app-footer">
+    © 2026 VinVin · Ghi Chú VinVin<br />
+    <a id="footerAboutLink">Thông tin bản quyền</a>
+  </div>
+</div>
+
+<div class="modal-overlay" id="aboutOverlay">
+  <div class="draw-modal" style="max-width:380px;">
+    <h2>Ghi Chú VinVin</h2>
+    <p class="about-row"><b>Tác giả:</b> VinVin</p>
+    <p class="about-row"><b>Phiên bản:</b> 1.0</p>
+    <p class="about-row"><b>Bản quyền:</b> Copyright © 2026 VinVin. Bảo lưu mọi quyền.</p>
+    <p class="about-row" style="font-size:12.5px; color:#B4B2A9;">Phần mềm này do tác giả tự thiết kế và phát triển. Nghiêm cấm sao chép, chỉnh sửa, phân phối lại hoặc sử dụng cho mục đích thương mại khi chưa có sự đồng ý bằng văn bản của tác giả.</p>
+    <p class="about-row" style="font-size:12.5px; color:#B4B2A9;">Dữ liệu ghi chú được lưu ngay trên thiết bị của bạn. Ứng dụng không thu thập hay gửi nội dung ghi chú đi nơi khác.</p>
+    <div class="draw-controls">
+      <div class="draw-spacer"></div>
+      <button class="draw-btn primary" id="closeAboutBtn">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="drawOverlay">
+  <div class="draw-modal">
+    <h2>Viết tay</h2>
+    <canvas id="drawCanvas"></canvas>
+    <div class="draw-tools">
+      <div class="color-swatches">
+        <button class="color-swatch active" data-color="#1C1B1A" style="background:#1C1B1A" aria-label="Bút đen"></button>
+        <button class="color-swatch" data-color="#2557D6" style="background:#2557D6" aria-label="Bút xanh"></button>
+        <button class="color-swatch" data-color="#D62828" style="background:#D62828" aria-label="Bút đỏ"></button>
+      </div>
+      <button class="eraser-btn" id="eraserBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H9L4 15a1 1 0 0 1 0-1.4L14.5 3.1a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4L11 19"/></svg>
+        Tẩy
+      </button>
+    </div>
+    <div class="draw-desc-row">
+      <label for="drawDesc">Mô tả ngắn (để tìm kiếm sau này)</label>
+      <input id="drawDesc" placeholder="Ví dụ: sơ đồ họp thứ 5, danh sách mua đồ..." />
+    </div>
+    <div class="draw-controls">
+      <button class="draw-btn" id="clearDrawBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Xóa hết
+      </button>
+      <div class="draw-spacer"></div>
+      <button class="draw-btn" id="cancelDrawBtn">Hủy</button>
+      <button class="draw-btn primary" id="saveDrawBtn">Lưu ghi chú</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editOverlay">
+  <div class="edit-modal">
+    <h2>Sửa ghi chú</h2>
+    <div>
+      <label class="edit-field-label" for="editText">Nội dung</label>
+      <textarea id="editText" placeholder="Nội dung ghi chú..."></textarea>
+    </div>
+    <div class="edit-due-row">
+      <button class="toggle-btn" id="editDueToggle">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span id="editDueToggleLabel">Không báo giờ</span>
+      </button>
+      <input type="date" id="editDueDate" />
+      <input type="time" id="editDueTime" />
+    </div>
+    <div>
+      <label class="edit-field-label" for="editProgress">Ghi chú tiến độ / lý do quá hạn (không bắt buộc)</label>
+      <textarea id="editProgress" placeholder="Ví dụ: đang chờ hàng về, delay do đối tác..." style="min-height:50px;"></textarea>
+    </div>
+    <div class="draw-controls">
+      <div class="draw-spacer"></div>
+      <button class="draw-btn" id="cancelEditBtn">Hủy</button>
+      <button class="draw-btn primary" id="saveEditBtn">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="backupOverlay">
+  <div class="draw-modal" style="max-width:380px;">
+    <h2>Sao lưu ghi chú</h2>
+    <p style="font-size:13px; color:#B4B2A9; margin:0;">Chọn cách lưu bản sao toàn bộ ghi chú (bao gồm cả ghi chú viết tay).</p>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="draw-btn" id="backupToDeviceBtn" style="justify-content:center;">Lưu vào bộ nhớ thiết bị</button>
+      <button class="draw-btn primary" id="backupToShareBtn" style="justify-content:center;">Chia sẻ qua Zalo / Gmail / Drive...</button>
+    </div>
+    <div class="draw-controls">
+      <div class="draw-spacer"></div>
+      <button class="draw-btn" id="cancelBackupBtn">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="restoreFileInput" accept="application/json,.json" style="display:none;" />
+
+<script>
+const STORAGE_KEY = "ghi-chu-notes-v1";
+let notes = [];
+let query = "";
+let dueEnabled = false;
+let statusFilter = null; // null = tất cả, "overdue" = chỉ quá hạn, "pending" = chỉ chưa đến hạn
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) notes = JSON.parse(raw);
+  } catch (e) {}
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+}
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function formatTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return time;
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if (d.toDateString() === yest.toDateString()) return "Hôm qua " + time;
+  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) + " " + time;
+}
+function formatDue(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+function getStatus(note) {
+  if (note.done) return "done";
+  if (note.dueAt && note.dueAt < Date.now()) return "overdue";
+  if (note.dueAt) return "pending";
+  return "none";
+}
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function highlight(text, q) {
+  const escaped = escapeHtml(text);
+  if (!q.trim()) return escaped;
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return escaped.replace(new RegExp("(" + esc + ")", "gi"), "<mark>$1</mark>");
+}
+
+function render() {
+  const feed = document.getElementById("feed");
+  const statusRow = document.getElementById("statusRow");
+
+  let filtered = query.trim()
+    ? notes.filter(n => n.text.toLowerCase().includes(query.trim().toLowerCase()))
+    : notes;
+
+  if (statusFilter === "overdue") {
+    filtered = filtered.filter(n => getStatus(n) === "overdue" && !n.done);
+  } else if (statusFilter === "pending") {
+    filtered = filtered.filter(n => getStatus(n) === "pending" && !n.done);
+  }
+
+  const counts = notes.reduce((acc, n) => {
+    const s = getStatus(n);
+    if (s === "overdue" && !n.done) acc.overdue++;
+    else if (s === "pending" && !n.done) acc.pending++;
+    return acc;
+  }, { overdue: 0, pending: 0 });
+
+  let statusHtml = "";
+  if (!document.getElementById("searchRow").classList.contains("open")) {
+    if (counts.overdue > 0) {
+      const active = statusFilter === "overdue";
+      statusHtml += `<span data-filter="overdue" style="color:#E4574A; cursor:pointer; ${active ? "text-decoration:underline; font-weight:700;" : ""}">⚠ ${counts.overdue} quá hạn</span>`;
+    }
+    if (counts.pending > 0) {
+      const active = statusFilter === "pending";
+      statusHtml += `<span data-filter="pending" style="color:#6FCF7A; cursor:pointer; ${active ? "text-decoration:underline; font-weight:700;" : ""}">🕒 ${counts.pending} chưa đến hạn</span>`;
+    }
+    if (statusFilter) {
+      statusHtml += `<span data-filter="clear" style="color:#8A8780; cursor:pointer; text-decoration:underline;">Xem tất cả</span>`;
+    }
+  }
+  statusRow.innerHTML = statusHtml;
+
+  if (filtered.length === 0) {
+    let emptyMsg = "Chưa có ghi chú nào. Viết ghi chú đầu tiên ở trên.";
+    if (query.trim()) emptyMsg = "Không tìm thấy ghi chú nào phù hợp.";
+    else if (statusFilter === "overdue") emptyMsg = "Không có ghi chú nào quá hạn.";
+    else if (statusFilter === "pending") emptyMsg = "Không có ghi chú nào chưa đến hạn.";
+    feed.innerHTML = `<div class="empty">${emptyMsg}</div>`;
+    return;
+  }
+
+  feed.innerHTML = filtered.map(note => {
+    const status = getStatus(note);
+    const isOverdue = status === "overdue" && !note.done;
+    let badge = "";
+    if (note.dueAt) {
+      const cls = note.done ? "done" : (isOverdue ? "overdue" : "pending");
+      const label = note.done ? "Đã hoàn thành" : (isOverdue ? "Quá hạn · " + formatDue(note.dueAt) : formatDue(note.dueAt));
+      badge = `<span class="badge ${cls}">${label}</span>`;
+    }
+    return `
+      <div class="note ${isOverdue ? "overdue" : ""} ${note.done ? "done" : ""}" data-id="${note.id}">
+        <button class="note-check ${note.done ? "done" : ""}" data-action="toggle" data-id="${note.id}" aria-label="Đánh dấu hoàn thành">
+          ${note.done
+            ? '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+            : '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>'}
+        </button>
+        <div class="note-body">
+          ${note.text ? `<div class="note-text ${note.done ? "done" : ""}">${highlight(note.text, query)}</div>` : ""}
+          ${note.drawing ? `<img class="draw-note-img" src="${note.drawing}" alt="Ghi chú viết tay" />` : ""}
+          ${note.progress ? `<div class="progress-note">${highlight(note.progress, query)}</div>` : ""}
+          <div class="note-meta">
+            <span class="note-time">${formatTime(note.createdAt)}</span>
+            ${badge}
+          </div>
+        </div>
+        <div class="note-actions">
+          <button class="edit-btn" data-action="edit" data-id="${note.id}" aria-label="Sửa ghi chú">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </button>
+          <button class="del-btn" data-action="delete" data-id="${note.id}" aria-label="Xóa ghi chú">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function addNote() {
+  const textarea = document.getElementById("draft");
+  const text = textarea.value.trim();
+  if (!text) return;
+  let dueAt = null;
+  const dueDateVal = document.getElementById("dueDate").value;
+  const dueTimeVal = document.getElementById("dueTime").value;
+  if (dueEnabled && dueDateVal) {
+    const dt = new Date(dueDateVal + "T" + (dueTimeVal || "09:00"));
+    if (!isNaN(dt.getTime())) dueAt = dt.getTime();
+  }
+  const newNote = { id: uid(), text, createdAt: Date.now(), dueAt, done: false };
+  notes.unshift(newNote);
+  save();
+  scheduleNoteNotification(newNote);
+  textarea.value = "";
+  dueEnabled = false;
+  document.getElementById("dueToggle").classList.remove("on");
+  document.getElementById("dueToggleLabel").textContent = "Không báo giờ";
+  document.getElementById("dueDate").classList.remove("show");
+  document.getElementById("dueTime").classList.remove("show");
+  document.getElementById("dueDate").value = "";
+  document.getElementById("dueTime").value = "";
+  updateAddBtn();
+  render();
+}
+
+function updateAddBtn() {
+  const btn = document.getElementById("addBtn");
+  const has = document.getElementById("draft").value.trim().length > 0;
+  btn.classList.toggle("active", has);
+}
+
+document.getElementById("draft").addEventListener("input", updateAddBtn);
+document.getElementById("draft").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addNote(); }
+});
+document.getElementById("addBtn").addEventListener("click", addNote);
+
+document.getElementById("dueToggle").addEventListener("click", () => {
+  dueEnabled = !dueEnabled;
+  document.getElementById("dueToggle").classList.toggle("on", dueEnabled);
+  document.getElementById("dueToggleLabel").textContent = dueEnabled ? "Có báo giờ" : "Không báo giờ";
+  document.getElementById("dueDate").classList.toggle("show", dueEnabled);
+  document.getElementById("dueTime").classList.toggle("show", dueEnabled);
+});
+
+document.getElementById("searchToggle").addEventListener("click", () => {
+  document.getElementById("searchRow").classList.add("open");
+  document.getElementById("searchInput").focus();
+  render();
+});
+document.getElementById("searchClose").addEventListener("click", () => {
+  document.getElementById("searchRow").classList.remove("open");
+  query = "";
+  document.getElementById("searchInput").value = "";
+  render();
+});
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  query = e.target.value;
+  render();
+});
+
+document.getElementById("statusRow").addEventListener("click", (e) => {
+  const span = e.target.closest("span[data-filter]");
+  if (!span) return;
+  const f = span.getAttribute("data-filter");
+  if (f === "clear") {
+    statusFilter = null;
+  } else if (statusFilter === f) {
+    statusFilter = null; // bấm lại vào dòng đang chọn để bỏ lọc
+  } else {
+    statusFilter = f;
+  }
+  render();
+});
+
+document.getElementById("feed").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  const id = btn.getAttribute("data-id");
+  const action = btn.getAttribute("data-action");
+  if (action === "toggle") {
+    const n = notes.find(n => n.id === id);
+    if (n) {
+      n.done = !n.done;
+      if (n.done) cancelNoteNotification(n.id);
+      else scheduleNoteNotification(n);
+    }
+    save(); render();
+  } else if (action === "delete") {
+    cancelNoteNotification(id);
+    notes = notes.filter(n => n.id !== id);
+    save(); render();
+  } else if (action === "edit") {
+    openEditModal(id);
+  }
+});
+
+// ---- Sửa ghi chú ----
+let editingNoteId = null;
+let editDueEnabled = false;
+
+function openEditModal(id) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  editingNoteId = id;
+
+  document.getElementById("editText").value = note.text || "";
+  document.getElementById("editProgress").value = note.progress || "";
+
+  editDueEnabled = !!note.dueAt;
+  const dueToggle = document.getElementById("editDueToggle");
+  const dueDateInput = document.getElementById("editDueDate");
+  const dueTimeInput = document.getElementById("editDueTime");
+  dueToggle.classList.toggle("on", editDueEnabled);
+  document.getElementById("editDueToggleLabel").textContent = editDueEnabled ? "Có báo giờ" : "Không báo giờ";
+  dueDateInput.classList.toggle("show", editDueEnabled);
+  dueTimeInput.classList.toggle("show", editDueEnabled);
+
+  if (note.dueAt) {
+    const d = new Date(note.dueAt);
+    const pad = (n) => String(n).padStart(2, "0");
+    dueDateInput.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    dueTimeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } else {
+    dueDateInput.value = "";
+    dueTimeInput.value = "";
+  }
+
+  document.getElementById("editOverlay").classList.add("open");
+}
+
+function setupEditModal() {
+  const overlay = document.getElementById("editOverlay");
+  const dueToggle = document.getElementById("editDueToggle");
+  const dueDateInput = document.getElementById("editDueDate");
+  const dueTimeInput = document.getElementById("editDueTime");
+
+  dueToggle.addEventListener("click", () => {
+    editDueEnabled = !editDueEnabled;
+    dueToggle.classList.toggle("on", editDueEnabled);
+    document.getElementById("editDueToggleLabel").textContent = editDueEnabled ? "Có báo giờ" : "Không báo giờ";
+    dueDateInput.classList.toggle("show", editDueEnabled);
+    dueTimeInput.classList.toggle("show", editDueEnabled);
+  });
+
+  document.getElementById("cancelEditBtn").addEventListener("click", () => {
+    overlay.classList.remove("open");
+    editingNoteId = null;
+  });
+
+  document.getElementById("saveEditBtn").addEventListener("click", () => {
+    if (!editingNoteId) return;
+    const note = notes.find(n => n.id === editingNoteId);
+    if (!note) return;
+
+    const newText = document.getElementById("editText").value.trim();
+    const newProgress = document.getElementById("editProgress").value.trim();
+
+    let newDueAt = null;
+    if (editDueEnabled && dueDateInput.value) {
+      const dt = new Date(dueDateInput.value + "T" + (dueTimeInput.value || "09:00"));
+      if (!isNaN(dt.getTime())) newDueAt = dt.getTime();
+    }
+
+    note.text = newText;
+    note.progress = newProgress || null;
+    note.dueAt = newDueAt;
+
+    cancelNoteNotification(note.id);
+    if (newDueAt && !note.done) scheduleNoteNotification(note);
+
+    save();
+    render();
+    overlay.classList.remove("open");
+    editingNoteId = null;
+  });
+}
+
+// ---- Nhập giọng nói ----
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const NativeSpeech = isNativeApp && window.Capacitor.Plugins ? window.Capacitor.Plugins.SpeechRecognition : null;
+const NativeNotifications = isNativeApp && window.Capacitor.Plugins ? window.Capacitor.Plugins.LocalNotifications : null;
+const NativeFilesystem = isNativeApp && window.Capacitor.Plugins ? window.Capacitor.Plugins.Filesystem : null;
+const NativeShare = isNativeApp && window.Capacitor.Plugins ? window.Capacitor.Plugins.Share : null;
+let recognizer = null;
+let listening = false;
+
+async function setupVoice() {
+  const micBtn = document.getElementById("micBtn");
+  const voiceStatus = document.getElementById("voiceStatus");
+
+  if (isNativeApp && NativeSpeech) {
+    setupNativeVoice(micBtn, voiceStatus);
+    return;
+  }
+
+  if (!SpeechRecognitionCtor) {
+    micBtn.style.opacity = "0.4";
+    micBtn.title = "Không hỗ trợ nhập giọng nói trên trình duyệt này";
+    micBtn.addEventListener("click", () => {
+      alert("Trình duyệt hiện tại không hỗ trợ nhập giọng nói. Hãy thử Chrome trên máy tính hoặc Android.");
+    });
+    return;
+  }
+  setupWebSpeechVoice(micBtn, voiceStatus);
+}
+
+function setupNativeVoice(micBtn, voiceStatus) {
+  const SR = NativeSpeech;
+  let listenersAttached = false;
+
+  function stopListeningUI() {
+    listening = false;
+    micBtn.classList.remove("listening");
+    voiceStatus.style.display = "none";
+  }
+
+  function attachListenersOnce() {
+    if (listenersAttached) return;
+    listenersAttached = true;
+
+    SR.addListener("partialResults", (data) => {
+      if (data && data.matches && data.matches.length) {
+        const textarea = document.getElementById("draft");
+        textarea.value = (textarea.dataset.voiceBase || "") + data.matches[0];
+        updateAddBtn();
+      }
+    });
+
+    SR.addListener("listeningState", (data) => {
+      if (data && data.status === "stopped") {
+        stopListeningUI();
+      }
+    });
+  }
+
+  async function startListening() {
+    try {
+      const perm = await SR.checkPermissions();
+      if (perm.speechRecognition !== "granted") {
+        const req = await SR.requestPermissions();
+        if (req.speechRecognition !== "granted") {
+          alert("Cần cấp quyền Micro cho app trong Cài đặt điện thoại để dùng tính năng này.");
+          return;
+        }
+      }
+
+      attachListenersOnce();
+
+      const textarea = document.getElementById("draft");
+      let baseText = textarea.value;
+      if (baseText && !baseText.endsWith(" ") && baseText.length > 0) baseText += " ";
+      textarea.dataset.voiceBase = baseText;
+
+      listening = true;
+      micBtn.classList.add("listening");
+      voiceStatus.style.display = "flex";
+
+      // popup:false chạy ẩn, không hiện khung "Nghe..." to của Google — bấm nút "Xong" để dừng ngay lập tức
+      const result = await SR.start({ language: "vi-VN", partialResults: true, popup: false, maxResults: 1 });
+      if (result && result.matches && result.matches.length) {
+        textarea.value = baseText + result.matches[0];
+        updateAddBtn();
+      }
+      stopListeningUI();
+    } catch (e) {
+      stopListeningUI();
+      console.error("Speech recognition error:", e);
+      alert("Không nhận dạng được giọng nói (" + (e && e.message ? e.message : "lỗi không rõ") + "). Kiểm tra Google app đã cập nhật và có kết nối mạng.");
+    }
+  }
+
+  async function stopListening() {
+    try { await SR.stop(); } catch (e) {}
+    stopListeningUI();
+  }
+
+  micBtn.addEventListener("click", () => {
+    if (listening) stopListening();
+    else startListening();
+  });
+
+  document.getElementById("voiceDoneBtn").addEventListener("click", () => {
+    if (listening) stopListening();
+  });
+}
+
+function setupWebSpeechVoice(micBtn, voiceStatus) {
+  recognizer = new SpeechRecognitionCtor();
+  recognizer.lang = "vi-VN";
+  recognizer.continuous = true;
+  recognizer.interimResults = true;
+
+  let baseText = "";
+
+  recognizer.onstart = () => {
+    listening = true;
+    micBtn.classList.add("listening");
+    voiceStatus.style.display = "flex";
+    baseText = document.getElementById("draft").value;
+    if (baseText && !baseText.endsWith(" ") && baseText.length > 0) baseText += " ";
+  };
+  recognizer.onend = () => {
+    listening = false;
+    micBtn.classList.remove("listening");
+    voiceStatus.style.display = "none";
+  };
+  recognizer.onerror = (e) => {
+    listening = false;
+    micBtn.classList.remove("listening");
+    voiceStatus.style.display = "none";
+    if (e.error !== "no-speech" && e.error !== "aborted") {
+      alert("Không nhận dạng được giọng nói. Kiểm tra quyền dùng micro cho trang này.");
+    }
+  };
+  recognizer.onresult = (event) => {
+    let finalText = "";
+    let interimText = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalText += t;
+      else interimText += t;
+    }
+    const textarea = document.getElementById("draft");
+    textarea.value = baseText + finalText + interimText;
+    if (finalText) baseText = baseText + finalText;
+    updateAddBtn();
+  };
+
+  micBtn.addEventListener("click", () => {
+    if (listening) {
+      recognizer.stop();
+    } else {
+      try { recognizer.start(); } catch (e) {}
+    }
+  });
+}
+
+// ---- Viết tay ----
+let drawing = false;
+let lastX = 0, lastY = 0;
+let hasDrawn = false;
+let currentColor = "#1C1B1A";
+let eraserOn = false;
+const PEN_WIDTH = 2.5;
+const ERASER_WIDTH = 22;
+
+function setupDrawing() {
+  const overlay = document.getElementById("drawOverlay");
+  const canvas = document.getElementById("drawCanvas");
+  const ctx = canvas.getContext("2d");
+  const descInput = document.getElementById("drawDesc");
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+  }
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function applyStrokeStyle() {
+    if (eraserOn) {
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.lineWidth = ERASER_WIDTH;
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = PEN_WIDTH;
+    }
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    drawing = true;
+    hasDrawn = true;
+    applyStrokeStyle();
+    const p = getPos(e);
+    lastX = p.x; lastY = p.y;
+    // draw a dot for single taps
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(lastX + 0.1, lastY + 0.1);
+    ctx.stroke();
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drawing) return;
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  });
+  canvas.addEventListener("pointerup", () => { drawing = false; });
+  canvas.addEventListener("pointerleave", () => { drawing = false; });
+
+  document.querySelectorAll(".color-swatch").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentColor = btn.getAttribute("data-color");
+      eraserOn = false;
+      document.querySelectorAll(".color-swatch").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("eraserBtn").classList.remove("active");
+    });
+  });
+
+  document.getElementById("eraserBtn").addEventListener("click", () => {
+    eraserOn = !eraserOn;
+    document.getElementById("eraserBtn").classList.toggle("active", eraserOn);
+    if (eraserOn) {
+      document.querySelectorAll(".color-swatch").forEach((b) => b.classList.remove("active"));
+    }
+  });
+
+  document.getElementById("drawBtn").addEventListener("click", () => {
+    overlay.classList.add("open");
+    hasDrawn = false;
+    eraserOn = false;
+    currentColor = "#1C1B1A";
+    descInput.value = "";
+    document.querySelectorAll(".color-swatch").forEach((b, i) => b.classList.toggle("active", i === 0));
+    document.getElementById("eraserBtn").classList.remove("active");
+    requestAnimationFrame(() => {
+      resizeCanvas();
+    });
+  });
+  document.getElementById("cancelDrawBtn").addEventListener("click", () => {
+    overlay.classList.remove("open");
+  });
+  document.getElementById("clearDrawBtn").addEventListener("click", () => {
+    const rect = canvas.getBoundingClientRect();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    hasDrawn = false;
+  });
+  document.getElementById("saveDrawBtn").addEventListener("click", () => {
+    if (!hasDrawn) {
+      overlay.classList.remove("open");
+      return;
+    }
+    const dataUrl = canvas.toDataURL("image/png");
+    const desc = descInput.value.trim();
+    notes.unshift({ id: uid(), text: desc, drawing: dataUrl, createdAt: Date.now(), dueAt: null, done: false });
+    save();
+    overlay.classList.remove("open");
+    render();
+  });
+}
+
+// ---- Thông báo hệ thống (rung/kêu khi đến giờ) ----
+async function setupNotifications() {
+  if (!isNativeApp || !NativeNotifications) return;
+  try {
+    const perm = await NativeNotifications.checkPermissions();
+    if (perm.display !== "granted") {
+      await NativeNotifications.requestPermissions();
+    }
+  } catch (e) {
+    console.warn("Không xin được quyền thông báo:", e);
+  }
+}
+
+async function scheduleNoteNotification(note) {
+  if (!isNativeApp || !NativeNotifications || !note.dueAt) return;
+  if (note.dueAt < Date.now()) return;
+  try {
+    await NativeNotifications.schedule({
+      notifications: [
+        {
+          id: hashIdToInt(note.id),
+          title: "Ghi chú đến hạn",
+          body: note.text || "Bạn có một ghi chú viết tay đến hạn",
+          schedule: { at: new Date(note.dueAt) },
+          sound: undefined,
+        },
+      ],
+    });
+  } catch (e) {
+    console.warn("Không đặt được thông báo:", e);
+  }
+}
+
+async function cancelNoteNotification(noteId) {
+  if (!isNativeApp || !NativeNotifications) return;
+  try {
+    await NativeNotifications.cancel({ notifications: [{ id: hashIdToInt(noteId) }] });
+  } catch (e) {}
+}
+
+function hashIdToInt(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % 2147483647;
+}
+
+// ---- Sao lưu / Khôi phục ----
+function buildBackupFilename() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `ghi-chu-sao-luu-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+}
+
+function buildBackupPayload() {
+  return JSON.stringify({ app: "ghi-chu", version: 1, exportedAt: Date.now(), notes: notes }, null, 2);
+}
+
+async function backupToDevice() {
+  const filename = buildBackupFilename();
+  const payload = buildBackupPayload();
+
+  if (isNativeApp && NativeFilesystem) {
+    try {
+      await NativeFilesystem.writeFile({
+        path: filename,
+        data: payload,
+        directory: "DOCUMENTS",
+        encoding: "utf8",
+        recursive: true,
+      });
+      showToast("Đã lưu vào thư mục Documents: " + filename);
+    } catch (e) {
+      console.error(e);
+      showToast("Không lưu được vào bộ nhớ máy. Thử cách Chia sẻ thay thế.");
+    }
+  } else {
+    // Chạy trên trình duyệt thường: tải file về theo cách web chuẩn
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Đã tải file sao lưu: " + filename);
+  }
+}
+
+async function backupToShare() {
+  const filename = buildBackupFilename();
+  const payload = buildBackupPayload();
+
+  if (isNativeApp && NativeFilesystem && NativeShare) {
+    try {
+      const written = await NativeFilesystem.writeFile({
+        path: filename,
+        data: payload,
+        directory: "CACHE",
+        encoding: "utf8",
+        recursive: true,
+      });
+      const uriResult = await NativeFilesystem.getUri({ path: filename, directory: "CACHE" });
+      await NativeShare.share({
+        title: "Sao lưu ghi chú",
+        text: "File sao lưu ghi chú của bạn",
+        url: uriResult.uri,
+        dialogTitle: "Chia sẻ file sao lưu",
+      });
+    } catch (e) {
+      console.error(e);
+      if (e && e.message && e.message.includes("cancel")) return;
+      showToast("Không chia sẻ được file. Thử lưu vào bộ nhớ thiết bị thay thế.");
+    }
+  } else {
+    showToast("Chia sẻ chỉ dùng được trong app đã cài, không dùng được qua trình duyệt.");
+  }
+}
+
+function showToast(msg) {
+  const existing = document.getElementById("backupToast");
+  if (existing) existing.remove();
+  const toast = document.createElement("div");
+  toast.id = "backupToast";
+  toast.style.cssText = "position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#2A2926; border:1px solid #3D3B37; color:#F4F1EA; font-size:13px; padding:10px 16px; border-radius:8px; z-index:300; max-width:85%; text-align:center;";
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+
+function mergeRestoredNotes(restoredNotes) {
+  let added = 0, skipped = 0;
+  const existingIds = new Set(notes.map(n => n.id));
+  for (const rn of restoredNotes) {
+    if (!rn || !rn.id) continue;
+    if (existingIds.has(rn.id)) { skipped++; continue; }
+    notes.push(rn);
+    existingIds.add(rn.id);
+    added++;
+  }
+  notes.sort((a, b) => b.createdAt - a.createdAt);
+  save();
+  render();
+  showToast(`Khôi phục xong: thêm ${added} ghi chú mới, bỏ qua ${skipped} ghi chú đã có sẵn.`);
+}
+
+function handleRestoreFileContent(text) {
+  try {
+    const data = JSON.parse(text);
+    const restoredNotes = Array.isArray(data) ? data : (Array.isArray(data.notes) ? data.notes : null);
+    if (!restoredNotes) {
+      showToast("File không đúng định dạng sao lưu của app.");
+      return;
+    }
+    if (notes.length > 0) {
+      if (!confirm(`Bạn đang có ${notes.length} ghi chú trên máy. Khôi phục sẽ thêm ${restoredNotes.length} ghi chú từ file vào (không xóa ghi chú hiện có, ghi chú trùng sẽ được bỏ qua). Tiếp tục?`)) {
+        return;
+      }
+    }
+    mergeRestoredNotes(restoredNotes);
+  } catch (e) {
+    console.error(e);
+    showToast("Không đọc được file — file có thể bị hỏng hoặc sai định dạng.");
+  }
+}
+
+function setupBackupRestore() {
+  const menuToggle = document.getElementById("menuToggle");
+  const menuDropdown = document.getElementById("menuDropdown");
+  const backupOverlay = document.getElementById("backupOverlay");
+  const restoreFileInput = document.getElementById("restoreFileInput");
+
+  menuToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menuDropdown.style.display = menuDropdown.style.display === "block" ? "none" : "block";
+  });
+  document.addEventListener("click", () => { menuDropdown.style.display = "none"; });
+  menuDropdown.addEventListener("click", (e) => e.stopPropagation());
+
+  document.getElementById("backupBtn").addEventListener("click", () => {
+    menuDropdown.style.display = "none";
+    backupOverlay.classList.add("open");
+  });
+  document.getElementById("cancelBackupBtn").addEventListener("click", () => {
+    backupOverlay.classList.remove("open");
+  });
+  document.getElementById("backupToDeviceBtn").addEventListener("click", async () => {
+    backupOverlay.classList.remove("open");
+    await backupToDevice();
+  });
+  document.getElementById("backupToShareBtn").addEventListener("click", async () => {
+    backupOverlay.classList.remove("open");
+    await backupToShare();
+  });
+
+  document.getElementById("restoreBtn").addEventListener("click", () => {
+    menuDropdown.style.display = "none";
+    restoreFileInput.click();
+  });
+  restoreFileInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => handleRestoreFileContent(reader.result);
+    reader.onerror = () => showToast("Không đọc được file đã chọn.");
+    reader.readAsText(file);
+    restoreFileInput.value = "";
+  });
+}
+
+// ---- Giới thiệu & Bản quyền ----
+function setupAbout() {
+  const overlay = document.getElementById("aboutOverlay");
+  const open = () => {
+    document.getElementById("menuDropdown").style.display = "none";
+    overlay.classList.add("open");
+  };
+  document.getElementById("aboutBtn").addEventListener("click", open);
+  document.getElementById("footerAboutLink").addEventListener("click", open);
+  document.getElementById("closeAboutBtn").addEventListener("click", () => overlay.classList.remove("open"));
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.classList.remove("open"); });
+}
+
+load();
+render();
+setupVoice();
+setupDrawing();
+setupEditModal();
+setupBackupRestore();
+setupAbout();
+setupNotifications();
+setInterval(render, 30000);
+
+</script>
+</body>
+</html>
