@@ -4,8 +4,8 @@
   Tác giả / Author: VinVin
   Copyright © 2026 VinVin. Bảo lưu mọi quyền / All rights reserved.
   Nghiêm cấm sao chép, phân phối lại hoặc sử dụng cho mục đích thương mại
-  khi chưa có sự đồng ý bằng văn bản của tác giả.
-  Phần mềm tuyệt đối không lấy dữ liệu hay truy cập trái phép thông tin cá nhân người dùng. 
+  khi chưa có sự đồng ý bằng văn bản của tác giả. 
+  Phần mềm tuyệt đối không lấy dữ liệu hay truy cập trái phép thông tin cá nhân người dùng
 -->
 <html lang="vi">
 <head>
@@ -57,11 +57,19 @@
     border-radius: 8px; color: #B4B2A9; font-size: 13px; padding: 6px 10px; cursor: pointer;
   }
   .toggle-btn.on { background: #3A4A3F; border-color: #5B8A72; color: #B7DCC5; }
-  input[type="date"], input[type="time"] {
+  input.due-input {
     background: #2A2926; border: 1px solid #3D3B37; border-radius: 8px; color: #F4F1EA;
-    font-size: 13px; padding: 6px 8px; color-scheme: dark; display: none;
+    font-size: 14px; padding: 6px 8px; text-align: center; display: none;
   }
-  input[type="date"].show, input[type="time"].show { display: inline-block; }
+  input.due-date { width: 104px; }
+  input.due-time { width: 70px; }
+  input.due-input { display: inline-block; }
+  .due-wrap { display: none; position: relative; align-items: center; gap: 4px; }
+  .due-wrap.show { display: inline-flex; }
+  .pick-btn { background: #2A2926; border: 1px solid #3D3B37; border-radius: 8px; color: #F4F1EA;
+    font-size: 15px; padding: 5px 7px; cursor: pointer; line-height: 1; }
+  .native-pick { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0;
+    pointer-events: none; color-scheme: dark; }
   .spacer { flex: 1; }
   .add-btn {
     display: flex; align-items: center; gap: 6px; background: #3D3B37; border: none; border-radius: 8px;
@@ -193,8 +201,8 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         <span id="dueToggleLabel">Không báo giờ</span>
       </button>
-      <input type="date" id="dueDate" />
-      <input type="time" id="dueTime" />
+      <span class="due-wrap"><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" autocomplete="off" class="due-input due-date" id="dueDate" /><button type="button" class="pick-btn" data-for="dueDate" data-kind="date" aria-label="Chọn">📅</button><input type="date" class="native-pick" tabindex="-1" data-native-for="dueDate" /></span>
+      <span class="due-wrap"><input type="text" inputmode="numeric" maxlength="5" placeholder="hh:mm" autocomplete="off" class="due-input due-time" id="dueTime" /><button type="button" class="pick-btn" data-for="dueTime" data-kind="time" aria-label="Chọn">🕐</button><input type="time" class="native-pick" tabindex="-1" data-native-for="dueTime" /></span>
       <div class="spacer"></div>
       <button class="mic-btn" id="micBtn" aria-label="Nhập bằng giọng nói" title="Nhập bằng giọng nói">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
@@ -278,8 +286,8 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         <span id="editDueToggleLabel">Không báo giờ</span>
       </button>
-      <input type="date" id="editDueDate" />
-      <input type="time" id="editDueTime" />
+      <span class="due-wrap"><input type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" autocomplete="off" class="due-input due-date" id="editDueDate" /><button type="button" class="pick-btn" data-for="editDueDate" data-kind="date" aria-label="Chọn">📅</button><input type="date" class="native-pick" tabindex="-1" data-native-for="editDueDate" /></span>
+      <span class="due-wrap"><input type="text" inputmode="numeric" maxlength="5" placeholder="hh:mm" autocomplete="off" class="due-input due-time" id="editDueTime" /><button type="button" class="pick-btn" data-for="editDueTime" data-kind="time" aria-label="Chọn">🕐</button><input type="time" class="native-pick" tabindex="-1" data-native-for="editDueTime" /></span>
     </div>
     <div>
       <label class="edit-field-label" for="editProgress">Ghi chú tiến độ / lý do quá hạn (không bắt buộc)</label>
@@ -442,6 +450,81 @@ function render() {
   }).join("");
 }
 
+// ===== Nhập ngày/giờ bằng bàn phím =====
+function fmtDateInput(v) {
+  const d = v.replace(/\D/g, "").slice(0, 8);
+  if (d.length > 4) return d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4);
+  if (d.length > 2) return d.slice(0, 2) + "/" + d.slice(2);
+  return d;
+}
+function fmtTimeInput(v) {
+  const d = v.replace(/\D/g, "").slice(0, 4);
+  if (d.length > 2) return d.slice(0, 2) + ":" + d.slice(2);
+  return d;
+}
+function parseDue(dateStr, timeStr) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((dateStr || "").trim());
+  if (!m) return null;
+  const t = /^(\d{1,2}):(\d{2})$/.exec((timeStr || "").trim() || "09:00");
+  if (!t) return null;
+  const day = +m[1], mon = +m[2], yr = +m[3], hh = +t[1], mm = +t[2];
+  if (mon < 1 || mon > 12 || day < 1 || hh > 23 || mm > 59) return null;
+  const dt = new Date(yr, mon - 1, day, hh, mm, 0, 0);
+  if (dt.getDate() !== day || dt.getMonth() !== mon - 1) return null;
+  return dt.getTime();
+}
+function fmtDateVal(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
+}
+function fmtTimeVal(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function bindDueMask(dateId, timeId) {
+  const di = document.getElementById(dateId), ti = document.getElementById(timeId);
+  di.addEventListener("input", () => { di.value = fmtDateInput(di.value); });
+  ti.addEventListener("input", () => { ti.value = fmtTimeInput(ti.value); });
+}
+function prefillDue(dateId, timeId) {
+  const di = document.getElementById(dateId), ti = document.getElementById(timeId);
+  if (!di.value) {
+    const d = new Date();
+    di.value = fmtDateVal(d);
+    if (!ti.value) ti.value = "09:00";
+  }
+}
+
+function setupPickers() {
+  document.querySelectorAll(".pick-btn").forEach((btn) => {
+    const target = document.getElementById(btn.dataset.for);
+    const nat = btn.parentElement.querySelector(".native-pick");
+    btn.addEventListener("click", () => {
+      const kind = btn.dataset.kind;
+      if (kind === "date") {
+        const ms = parseDue(target.value, "00:00");
+        const d = ms ? new Date(ms) : new Date();
+        nat.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      } else {
+        nat.value = /^\d{1,2}:\d{2}$/.test(target.value) ? target.value.padStart(5, "0") : "09:00";
+      }
+      nat.style.pointerEvents = "auto";
+      try { nat.showPicker(); } catch (e) { nat.focus(); nat.click(); }
+    });
+    nat.addEventListener("change", () => {
+      if (!nat.value) return;
+      if (btn.dataset.kind === "date") {
+        const [y, m, d] = nat.value.split("-");
+        target.value = d + "/" + m + "/" + y;
+      } else {
+        target.value = nat.value;
+      }
+      nat.style.pointerEvents = "none";
+    });
+  });
+}
+setupPickers();
+
 function addNote() {
   const textarea = document.getElementById("draft");
   const text = textarea.value.trim();
@@ -450,8 +533,8 @@ function addNote() {
   const dueDateVal = document.getElementById("dueDate").value;
   const dueTimeVal = document.getElementById("dueTime").value;
   if (dueEnabled && dueDateVal) {
-    const dt = new Date(dueDateVal + "T" + (dueTimeVal || "09:00"));
-    if (!isNaN(dt.getTime())) dueAt = dt.getTime();
+    dueAt = parseDue(dueDateVal, dueTimeVal);
+    if (dueAt === null) { showToast("Ngày/giờ chưa đúng. Ví dụ: 25/12/2026 và 08:30"); return; }
   }
   const newNote = { id: uid(), text, createdAt: Date.now(), dueAt, done: false };
   notes.unshift(newNote);
@@ -461,8 +544,8 @@ function addNote() {
   dueEnabled = false;
   document.getElementById("dueToggle").classList.remove("on");
   document.getElementById("dueToggleLabel").textContent = "Không báo giờ";
-  document.getElementById("dueDate").classList.remove("show");
-  document.getElementById("dueTime").classList.remove("show");
+  document.getElementById("dueDate").parentElement.classList.remove("show");
+  document.getElementById("dueTime").parentElement.classList.remove("show");
   document.getElementById("dueDate").value = "";
   document.getElementById("dueTime").value = "";
   updateAddBtn();
@@ -485,9 +568,11 @@ document.getElementById("dueToggle").addEventListener("click", () => {
   dueEnabled = !dueEnabled;
   document.getElementById("dueToggle").classList.toggle("on", dueEnabled);
   document.getElementById("dueToggleLabel").textContent = dueEnabled ? "Có báo giờ" : "Không báo giờ";
-  document.getElementById("dueDate").classList.toggle("show", dueEnabled);
-  document.getElementById("dueTime").classList.toggle("show", dueEnabled);
+  document.getElementById("dueDate").parentElement.classList.toggle("show", dueEnabled);
+  document.getElementById("dueTime").parentElement.classList.toggle("show", dueEnabled);
+  if (dueEnabled) prefillDue("dueDate", "dueTime");
 });
+bindDueMask("dueDate", "dueTime");
 
 document.getElementById("searchToggle").addEventListener("click", () => {
   document.getElementById("searchRow").classList.add("open");
@@ -559,14 +644,14 @@ function openEditModal(id) {
   const dueTimeInput = document.getElementById("editDueTime");
   dueToggle.classList.toggle("on", editDueEnabled);
   document.getElementById("editDueToggleLabel").textContent = editDueEnabled ? "Có báo giờ" : "Không báo giờ";
-  dueDateInput.classList.toggle("show", editDueEnabled);
-  dueTimeInput.classList.toggle("show", editDueEnabled);
+  dueDateInput.parentElement.classList.toggle("show", editDueEnabled);
+  dueTimeInput.parentElement.classList.toggle("show", editDueEnabled);
 
   if (note.dueAt) {
     const d = new Date(note.dueAt);
     const pad = (n) => String(n).padStart(2, "0");
-    dueDateInput.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    dueTimeInput.value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    dueDateInput.value = fmtDateVal(d);
+    dueTimeInput.value = fmtTimeVal(d);
   } else {
     dueDateInput.value = "";
     dueTimeInput.value = "";
@@ -585,9 +670,11 @@ function setupEditModal() {
     editDueEnabled = !editDueEnabled;
     dueToggle.classList.toggle("on", editDueEnabled);
     document.getElementById("editDueToggleLabel").textContent = editDueEnabled ? "Có báo giờ" : "Không báo giờ";
-    dueDateInput.classList.toggle("show", editDueEnabled);
-    dueTimeInput.classList.toggle("show", editDueEnabled);
+    dueDateInput.parentElement.classList.toggle("show", editDueEnabled);
+    dueTimeInput.parentElement.classList.toggle("show", editDueEnabled);
+    if (editDueEnabled) prefillDue("editDueDate", "editDueTime");
   });
+  bindDueMask("editDueDate", "editDueTime");
 
   document.getElementById("cancelEditBtn").addEventListener("click", () => {
     overlay.classList.remove("open");
@@ -604,8 +691,8 @@ function setupEditModal() {
 
     let newDueAt = null;
     if (editDueEnabled && dueDateInput.value) {
-      const dt = new Date(dueDateInput.value + "T" + (dueTimeInput.value || "09:00"));
-      if (!isNaN(dt.getTime())) newDueAt = dt.getTime();
+      newDueAt = parseDue(dueDateInput.value, dueTimeInput.value);
+      if (newDueAt === null) { showToast("Ngày/giờ chưa đúng. Ví dụ: 25/12/2026 và 08:30"); return; }
     }
 
     note.text = newText;
