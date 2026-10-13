@@ -4,8 +4,9 @@
   Tác giả / Author: VinVin
   Copyright © 2026 VinVin. Bảo lưu mọi quyền / All rights reserved.
   Nghiêm cấm sao chép, phân phối lại hoặc sử dụng cho mục đích thương mại
-  khi chưa có sự đồng ý bằng văn bản của tác giả. 
-  Phần mềm tuyệt đối không lấy dữ liệu hay truy cập trái phép thông tin cá nhân người dùng
+  khi chưa có sự đồng ý bằng văn bản của tác giả.
+  Phần mềm ghi chú cần quyền thông báo và chụp ảnh, tất cả dữ liệu được lưu tại máy.
+  Phần mềm tuyệt đối không lấy dữ liệu hay truy cập trái phép thông tin cá nhân người dùng.
 -->
 <html lang="vi">
 <head>
@@ -126,6 +127,25 @@
 
   .draw-note-img { display: block; max-width: 100%; border-radius: 8px; background: #fff; margin-top: 4px; }
 
+  .img-strip { display: flex; gap: 8px; flex-wrap: wrap; }
+  .img-strip:empty { display: none; }
+  .thumb { position: relative; width: 66px; height: 66px; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: #2A2926; }
+  .thumb button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+    border: none; background: #E4574A; color: #fff; font-size: 13px; line-height: 20px; padding: 0; cursor: pointer; }
+  .note-imgs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .note-img { border-radius: 8px; object-fit: cover; background: #E4E2D9; cursor: pointer; }
+  .note-imgs.n1 .note-img { max-width: 100%; max-height: 320px; }
+  .note-imgs.n2 .note-img, .note-imgs.n3 .note-img { width: calc(50% - 3px); height: 130px; }
+  .img-actions { display: flex; gap: 8px; }
+  #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 250;
+    align-items: center; justify-content: center; flex-direction: column; }
+  #lightbox.open { display: flex; }
+  #lightbox img { max-width: 100%; max-height: 82vh; object-fit: contain; }
+  #lightbox .lb-bar { display: flex; gap: 14px; align-items: center; margin-top: 12px; color: #F4F1EA; font-size: 14px; }
+  #lightbox .lb-bar button { background: #2A2926; border: 1px solid #3D3B37; color: #F4F1EA; border-radius: 8px;
+    padding: 8px 16px; font-size: 15px; cursor: pointer; }
+  .edit-modal { max-height: 92vh; overflow-y: auto; }
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100;
     align-items: center; justify-content: center; padding: 16px;
@@ -207,6 +227,8 @@
       <button class="mic-btn" id="micBtn" aria-label="Nhập bằng giọng nói" title="Nhập bằng giọng nói">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
       </button>
+      <button class="mic-btn" id="camBtn" aria-label="Chụp ảnh" title="Chụp ảnh">📷</button>
+      <button class="mic-btn" id="galBtn" aria-label="Chọn ảnh từ thư viện" title="Chọn ảnh">🖼️</button>
       <button class="mic-btn" id="drawBtn" aria-label="Viết tay bằng bút" title="Viết tay bằng bút">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
       </button>
@@ -215,6 +237,11 @@
         Thêm
       </button>
     </div>
+    <div id="draftImgs" class="img-strip" style="margin-top:8px;"></div>
+    <input type="file" id="camInput" accept="image/*" capture="environment" hidden />
+    <input type="file" id="galInput" accept="image/*" multiple hidden />
+    <input type="file" id="editCamInput" accept="image/*" capture="environment" hidden />
+    <input type="file" id="editGalInput" accept="image/*" multiple hidden />
     <div id="voiceStatus" style="display:none; align-items:center; gap:8px; margin-top:6px;">
       <span style="font-size:12px; color:#E4A483;">Đang nghe... nói vào micro</span>
       <button id="voiceDoneBtn" style="background:#3A4A3F; border:1px solid #5B8A72; color:#B7DCC5; border-radius:6px; font-size:12px; padding:3px 10px; cursor:pointer;">Xong</button>
@@ -274,6 +301,16 @@
   </div>
 </div>
 
+<div id="lightbox">
+  <img id="lbImg" alt="Ảnh" />
+  <div class="lb-bar">
+    <button id="lbPrev" type="button">‹</button>
+    <span id="lbCount"></span>
+    <button id="lbNext" type="button">›</button>
+    <button id="lbClose" type="button">Đóng</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="editOverlay">
   <div class="edit-modal">
     <h2>Sửa ghi chú</h2>
@@ -292,6 +329,17 @@
     <div>
       <label class="edit-field-label" for="editProgress">Ghi chú tiến độ / lý do quá hạn (không bắt buộc)</label>
       <textarea id="editProgress" placeholder="Ví dụ: đang chờ hàng về, delay do đối tác..." style="min-height:50px;"></textarea>
+    </div>
+    <div>
+      <label class="edit-field-label">Ảnh đính kèm</label>
+      <div id="editImgs" class="img-strip" style="margin-bottom:8px;"></div>
+      <div class="img-actions">
+        <button class="draw-btn" id="editCamBtn" type="button">📷 Chụp ảnh</button>
+        <button class="draw-btn" id="editGalBtn" type="button">🖼️ Thêm ảnh</button>
+      </div>
+    </div>
+    <div class="draw-controls" id="editDrawRow" style="display:none;">
+      <button class="draw-btn" id="editDrawBtn" style="width:100%;justify-content:center;">✏️ Sửa hình vẽ tay (vẽ thêm / tẩy)</button>
     </div>
     <div class="draw-controls">
       <div class="draw-spacer"></div>
@@ -431,6 +479,7 @@ function render() {
         </button>
         <div class="note-body">
           ${note.text ? `<div class="note-text ${note.done ? "done" : ""}">${highlight(note.text, query)}</div>` : ""}
+          ${(note.images && note.images.length) ? `<div class="note-imgs n${Math.min(note.images.length, 3)}">${note.images.map((iid, i) => `<img class="note-img" data-img-id="${iid}" data-note="${note.id}" data-idx="${i}" alt="Ảnh đính kèm" />`).join("")}</div>` : ""}
           ${note.drawing ? `<img class="draw-note-img" src="${note.drawing}" alt="Ghi chú viết tay" />` : ""}
           ${note.progress ? `<div class="progress-note">${highlight(note.progress, query)}</div>` : ""}
           <div class="note-meta">
@@ -448,6 +497,7 @@ function render() {
         </div>
       </div>`;
   }).join("");
+  hydrateImages(feed);
 }
 
 // ===== Nhập ngày/giờ bằng bàn phím =====
@@ -525,10 +575,201 @@ function setupPickers() {
 }
 setupPickers();
 
+// ===== Kho ảnh (IndexedDB) =====
+let imgDbPromise = null;
+function imgDb() {
+  if (!imgDbPromise) {
+    imgDbPromise = new Promise((resolve, reject) => {
+      const r = indexedDB.open("ghi-chu-images", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("images");
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  return imgDbPromise;
+}
+async function imgTx(mode, fn) {
+  const db = await imgDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("images", mode);
+    const req = fn(tx.objectStore("images"));
+    tx.oncomplete = () => resolve(req ? req.result : undefined);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+const imgPut = (id, blob) => imgTx("readwrite", (st) => st.put(blob, id));
+const imgGet = (id) => imgTx("readonly", (st) => st.get(id));
+const imgKeys = () => imgTx("readonly", (st) => st.getAllKeys());
+function imgDel(id) {
+  const u = imgUrlCache.get(id);
+  if (u) { URL.revokeObjectURL(u); imgUrlCache.delete(id); }
+  return imgTx("readwrite", (st) => st.delete(id)).catch(() => {});
+}
+
+const imgUrlCache = new Map();
+async function imgUrl(id) {
+  if (imgUrlCache.has(id)) return imgUrlCache.get(id);
+  const blob = await imgGet(id);
+  if (!blob) return null;
+  const url = URL.createObjectURL(blob);
+  imgUrlCache.set(id, url);
+  return url;
+}
+function hydrateImages(root) {
+  root.querySelectorAll("img[data-img-id]").forEach(async (el) => {
+    const id = el.getAttribute("data-img-id");
+    if (imgUrlCache.has(id)) { if (el.getAttribute("src") !== imgUrlCache.get(id)) el.src = imgUrlCache.get(id); return; }
+    try {
+      const u = await imgUrl(id);
+      if (u) el.src = u;
+    } catch (e) {}
+  });
+}
+
+function resizeImageFile(file, maxSide = 1280, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const cx = c.getContext("2d");
+      cx.fillStyle = "#fff";
+      cx.fillRect(0, 0, w, h);
+      cx.drawImage(img, 0, 0, w, h);
+      c.toBlob((b) => { URL.revokeObjectURL(url); b ? resolve(b) : reject(new Error("toBlob")); }, "image/jpeg", quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("load")); };
+    img.src = url;
+  });
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+async function ingestImageFiles(fileList, idsArr, onAdd) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  showToast("Đang xử lý ảnh...");
+  let ok = 0;
+  for (const f of files) {
+    try {
+      const blob = await resizeImageFile(f);
+      const id = "img" + uid();
+      await imgPut(id, blob);
+      idsArr.push(id);
+      if (onAdd) onAdd(id);
+      ok++;
+    } catch (e) { console.error(e); }
+  }
+  showToast(ok ? `Đã thêm ${ok} ảnh` : "Không đọc được ảnh");
+}
+
+function stripHtml(ids) {
+  return ids.map((id) => `<div class="thumb"><img data-img-id="${id}" alt="Ảnh" /><button type="button" data-rm="${id}" aria-label="Xóa ảnh">×</button></div>`).join("");
+}
+
+let draftImgIds = [];
+function renderDraftStrip() {
+  const el = document.getElementById("draftImgs");
+  el.innerHTML = stripHtml(draftImgIds);
+  hydrateImages(el);
+  updateAddBtn();
+}
+
+let editImgIds = [];
+const editAddedIds = new Set();
+const editRemovedIds = new Set();
+function renderEditStrip() {
+  const el = document.getElementById("editImgs");
+  el.innerHTML = stripHtml(editImgIds);
+  hydrateImages(el);
+}
+function discardEditImages() {
+  editAddedIds.forEach(imgDel);
+  editAddedIds.clear();
+  editRemovedIds.clear();
+}
+
+// Xem ảnh toàn màn hình
+let lbIds = [], lbIdx = 0;
+async function showLightbox() {
+  const lb = document.getElementById("lightbox");
+  const u = await imgUrl(lbIds[lbIdx]).catch(() => null);
+  document.getElementById("lbImg").src = u || "";
+  document.getElementById("lbCount").textContent = (lbIdx + 1) + " / " + lbIds.length;
+  lb.classList.add("open");
+}
+
+function setupImages() {
+  const bind = (btnId, inputId, getIds, onAdd, after) => {
+    const input = document.getElementById(inputId);
+    document.getElementById(btnId).addEventListener("click", () => input.click());
+    input.addEventListener("change", async () => {
+      await ingestImageFiles(input.files, getIds(), onAdd);
+      input.value = "";
+      after();
+    });
+  };
+  bind("camBtn", "camInput", () => draftImgIds, null, renderDraftStrip);
+  bind("galBtn", "galInput", () => draftImgIds, null, renderDraftStrip);
+  bind("editCamBtn", "editCamInput", () => editImgIds, (id) => editAddedIds.add(id), renderEditStrip);
+  bind("editGalBtn", "editGalInput", () => editImgIds, (id) => editAddedIds.add(id), renderEditStrip);
+
+  document.getElementById("draftImgs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rm]");
+    if (!b) return;
+    const id = b.getAttribute("data-rm");
+    draftImgIds = draftImgIds.filter((x) => x !== id);
+    imgDel(id);
+    renderDraftStrip();
+  });
+  document.getElementById("editImgs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rm]");
+    if (!b) return;
+    const id = b.getAttribute("data-rm");
+    editImgIds = editImgIds.filter((x) => x !== id);
+    if (editAddedIds.has(id)) { editAddedIds.delete(id); imgDel(id); }
+    else editRemovedIds.add(id);
+    renderEditStrip();
+  });
+
+  document.getElementById("feed").addEventListener("click", (e) => {
+    const im = e.target.closest(".note-img");
+    if (!im) return;
+    const note = notes.find((n) => n.id === im.getAttribute("data-note"));
+    if (!note || !note.images) return;
+    lbIds = note.images.slice();
+    lbIdx = +im.getAttribute("data-idx") || 0;
+    showLightbox();
+  });
+  const lb = document.getElementById("lightbox");
+  document.getElementById("lbClose").addEventListener("click", () => lb.classList.remove("open"));
+  document.getElementById("lbPrev").addEventListener("click", () => { lbIdx = (lbIdx - 1 + lbIds.length) % lbIds.length; showLightbox(); });
+  document.getElementById("lbNext").addEventListener("click", () => { lbIdx = (lbIdx + 1) % lbIds.length; showLightbox(); });
+
+  // Dọn ảnh mồ côi (ảnh không còn thuộc ghi chú nào)
+  imgKeys().then((keys) => {
+    const used = new Set();
+    notes.forEach((n) => (n.images || []).forEach((i) => used.add(i)));
+    (keys || []).forEach((k) => { if (!used.has(k)) imgDel(k); });
+  }).catch(() => {});
+}
+
 function addNote() {
   const textarea = document.getElementById("draft");
   const text = textarea.value.trim();
-  if (!text) return;
+  if (!text && draftImgIds.length === 0) return;
   let dueAt = null;
   const dueDateVal = document.getElementById("dueDate").value;
   const dueTimeVal = document.getElementById("dueTime").value;
@@ -537,6 +778,9 @@ function addNote() {
     if (dueAt === null) { showToast("Ngày/giờ chưa đúng. Ví dụ: 25/12/2026 và 08:30"); return; }
   }
   const newNote = { id: uid(), text, createdAt: Date.now(), dueAt, done: false };
+  if (draftImgIds.length) newNote.images = draftImgIds.slice();
+  draftImgIds = [];
+  renderDraftStrip();
   notes.unshift(newNote);
   save();
   scheduleNoteNotification(newNote);
@@ -554,7 +798,7 @@ function addNote() {
 
 function updateAddBtn() {
   const btn = document.getElementById("addBtn");
-  const has = document.getElementById("draft").value.trim().length > 0;
+  const has = document.getElementById("draft").value.trim().length > 0 || draftImgIds.length > 0;
   btn.classList.toggle("active", has);
 }
 
@@ -619,6 +863,8 @@ document.getElementById("feed").addEventListener("click", (e) => {
     save(); render();
   } else if (action === "delete") {
     cancelNoteNotification(id);
+    const delNote = notes.find(n => n.id === id);
+    if (delNote && delNote.images) delNote.images.forEach(imgDel);
     notes = notes.filter(n => n.id !== id);
     save(); render();
   } else if (action === "edit") {
@@ -657,6 +903,11 @@ function openEditModal(id) {
     dueTimeInput.value = "";
   }
 
+  editImgIds = (note.images || []).slice();
+  editAddedIds.clear();
+  editRemovedIds.clear();
+  renderEditStrip();
+  document.getElementById("editDrawRow").style.display = note.drawing ? "flex" : "none";
   document.getElementById("editOverlay").classList.add("open");
 }
 
@@ -676,7 +927,18 @@ function setupEditModal() {
   });
   bindDueMask("editDueDate", "editDueTime");
 
+  document.getElementById("editDrawBtn").addEventListener("click", () => {
+    const note = notes.find(n => n.id === editingNoteId);
+    if (!note || !note.drawing) return;
+    const id = editingNoteId;
+    discardEditImages();
+    overlay.classList.remove("open");
+    editingNoteId = null;
+    openDrawEditor(id);
+  });
+
   document.getElementById("cancelEditBtn").addEventListener("click", () => {
+    discardEditImages();
     overlay.classList.remove("open");
     editingNoteId = null;
   });
@@ -696,6 +958,10 @@ function setupEditModal() {
     }
 
     note.text = newText;
+    editRemovedIds.forEach(imgDel);
+    editRemovedIds.clear();
+    editAddedIds.clear();
+    note.images = editImgIds.length ? editImgIds.slice() : undefined;
     note.progress = newProgress || null;
     note.dueAt = newDueAt;
 
@@ -874,6 +1140,8 @@ function setupWebSpeechVoice(micBtn, voiceStatus) {
 let drawing = false;
 let lastX = 0, lastY = 0;
 let hasDrawn = false;
+let editingDrawId = null;
+let openDrawEditor = () => {};
 let currentColor = "#1C1B1A";
 let eraserOn = false;
 const PEN_WIDTH = 2.5;
@@ -884,6 +1152,32 @@ function setupDrawing() {
   const canvas = document.getElementById("drawCanvas");
   const ctx = canvas.getContext("2d");
   const descInput = document.getElementById("drawDesc");
+
+  const saveDrawBtnEl = document.getElementById("saveDrawBtn");
+
+  openDrawEditor = function (id) {
+    const note = notes.find(n => n.id === id);
+    if (!note || !note.drawing) return;
+    editingDrawId = id;
+    hasDrawn = true;
+    eraserOn = false;
+    currentColor = "#1C1B1A";
+    descInput.value = note.text || "";
+    saveDrawBtnEl.textContent = "Lưu thay đổi";
+    document.querySelectorAll(".color-swatch").forEach((b, i) => b.classList.toggle("active", i === 0));
+    document.getElementById("eraserBtn").classList.remove("active");
+    overlay.classList.add("open");
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      const img = new Image();
+      img.onload = () => {
+        const rect = canvas.getBoundingClientRect();
+        ctx.globalCompositeOperation = "source-over";
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      };
+      img.src = note.drawing;
+    });
+  };
 
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
@@ -962,6 +1256,8 @@ function setupDrawing() {
     eraserOn = false;
     currentColor = "#1C1B1A";
     descInput.value = "";
+    editingDrawId = null;
+    saveDrawBtnEl.textContent = "Lưu ghi chú";
     document.querySelectorAll(".color-swatch").forEach((b, i) => b.classList.toggle("active", i === 0));
     document.getElementById("eraserBtn").classList.remove("active");
     requestAnimationFrame(() => {
@@ -969,6 +1265,7 @@ function setupDrawing() {
     });
   });
   document.getElementById("cancelDrawBtn").addEventListener("click", () => {
+    editingDrawId = null;
     overlay.classList.remove("open");
   });
   document.getElementById("clearDrawBtn").addEventListener("click", () => {
@@ -985,6 +1282,15 @@ function setupDrawing() {
     }
     const dataUrl = canvas.toDataURL("image/png");
     const desc = descInput.value.trim();
+    if (editingDrawId) {
+      const n = notes.find(x => x.id === editingDrawId);
+      if (n) { n.drawing = dataUrl; n.text = desc; }
+      editingDrawId = null;
+      save();
+      overlay.classList.remove("open");
+      render();
+      return;
+    }
     notes.unshift({ id: uid(), text: desc, drawing: dataUrl, createdAt: Date.now(), dueAt: null, done: false });
     save();
     overlay.classList.remove("open");
@@ -1047,13 +1353,23 @@ function buildBackupFilename() {
   return `ghi-chu-sao-luu-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
 }
 
-function buildBackupPayload() {
-  return JSON.stringify({ app: "ghi-chu", version: 1, exportedAt: Date.now(), notes: notes }, null, 2);
+async function buildBackupPayload() {
+  const imageData = {};
+  for (const n of notes) {
+    for (const id of (n.images || [])) {
+      if (imageData[id]) continue;
+      try {
+        const b = await imgGet(id);
+        if (b) imageData[id] = await blobToDataUrl(b);
+      } catch (e) {}
+    }
+  }
+  return JSON.stringify({ app: "ghi-chu", version: 2, exportedAt: Date.now(), notes: notes, imageData: imageData });
 }
 
 async function backupToDevice() {
   const filename = buildBackupFilename();
-  const payload = buildBackupPayload();
+  const payload = await buildBackupPayload();
 
   if (isNativeApp && NativeFilesystem) {
     try {
@@ -1084,7 +1400,7 @@ async function backupToDevice() {
 
 async function backupToShare() {
   const filename = buildBackupFilename();
-  const payload = buildBackupPayload();
+  const payload = await buildBackupPayload();
 
   if (isNativeApp && NativeFilesystem && NativeShare) {
     try {
@@ -1123,12 +1439,17 @@ function showToast(msg) {
   setTimeout(() => toast.remove(), 3500);
 }
 
-function mergeRestoredNotes(restoredNotes) {
+async function mergeRestoredNotes(restoredNotes, imageData) {
   let added = 0, skipped = 0;
   const existingIds = new Set(notes.map(n => n.id));
   for (const rn of restoredNotes) {
     if (!rn || !rn.id) continue;
     if (existingIds.has(rn.id)) { skipped++; continue; }
+    for (const iid of (rn.images || [])) {
+      const du = imageData && imageData[iid];
+      if (!du) continue;
+      try { await imgPut(iid, await (await fetch(du)).blob()); } catch (e) { console.error(e); }
+    }
     notes.push(rn);
     existingIds.add(rn.id);
     added++;
@@ -1139,7 +1460,7 @@ function mergeRestoredNotes(restoredNotes) {
   showToast(`Khôi phục xong: thêm ${added} ghi chú mới, bỏ qua ${skipped} ghi chú đã có sẵn.`);
 }
 
-function handleRestoreFileContent(text) {
+async function handleRestoreFileContent(text) {
   try {
     const data = JSON.parse(text);
     const restoredNotes = Array.isArray(data) ? data : (Array.isArray(data.notes) ? data.notes : null);
@@ -1152,7 +1473,7 @@ function handleRestoreFileContent(text) {
         return;
       }
     }
-    mergeRestoredNotes(restoredNotes);
+    await mergeRestoredNotes(restoredNotes, Array.isArray(data) ? null : data.imageData);
   } catch (e) {
     console.error(e);
     showToast("Không đọc được file — file có thể bị hỏng hoặc sai định dạng.");
@@ -1223,6 +1544,7 @@ setupDrawing();
 setupEditModal();
 setupBackupRestore();
 setupAbout();
+setupImages();
 setupNotifications();
 setInterval(render, 30000);
 
